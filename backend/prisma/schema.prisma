@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Cliente {
+  id          Int       @id @default(autoincrement())
+  nome        String
+  telefone    String
+  cpf         String?
+  observacoes String?
+  dataCadastro DateTime @default(now())
+  saldoFiado  Float     @default(0)
+  comandas    Comanda[]
+  fiadoTransacoes FiadoTransacao[]
+}
+
+model Comanda {
+  id           Int       @id @default(autoincrement())
+  clienteId    Int
+  cliente      Cliente   @relation(fields: [clienteId], references: [id])
+  status       String    @default("aberta") // "aberta" | "fechada"
+  local        String    @default("Balcão")
+  valorTotal   Float     @default(0)
+  formaPagamento String?
+  dataAbertura DateTime  @default(now())
+  dataFechamento DateTime?
+  itens        ItemComanda[]
+}
+
+model ItemComanda {
+  id           Int     @id @default(autoincrement())
+  comandaId    Int
+  comanda      Comanda @relation(fields: [comandaId], references: [id])
+  nomeProduto  String
+  quantidade   Int
+  valorUnitario Float
+  valorTotal   Float
+}
+
+model Produto {
+  id        Int     @id @default(autoincrement())
+  nome      String
+  categoria String  @default("Outros")
+  preco     Float
+  ativo     Boolean @default(true)
+}
+
+model FiadoTransacao {
+  id          Int      @id @default(autoincrement())
+  clienteId   Int
+  cliente     Cliente  @relation(fields: [clienteId], references: [id])
+  valor       Float
+  descricao   String?
+  data        DateTime @default(now())
+}

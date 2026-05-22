@@ -1,0 +1,111 @@
+const express = require('express');
+const router = express.Router();
+const prisma = require('../prisma');
+
+// Listar todas as comandas (abertas por padrão)
+router.get('/', async (req, res) => {
+  const { status } = req.query;
+  const comandas = await prisma.comanda.findMany({
+    where: status ? { status } : undefined,
+    include: { cliente: true, itens: true },
+    orderBy: { dataAbertura: 'desc' },
+  });
+  res.json(comandas);
+});
+
+// Buscar comanda por ID
+router.get('/:id', async (req, res) => {
+  const comanda = await prisma.comanda.findUnique({
+    where: { id: Number(req.params.id) },
+    include: { cliente: true, itens: true },
+  });
+  if (!comanda) return res.status(404).json({ erro: 'Comanda não encontrada' });
+  res.json(comanda);
+});
+
+// Abrir nova comanda
+router.post('/', async (req, res) => {
+  const { clienteId, local } = req.body;
+  if (!clienteId) return res.status(400).json({ erro: 'clienteId é obrigatório' });
+  const comanda = await prisma.comanda.create({
+    data: { clienteId: Number(clienteId), local: local || 'Balcão' },
+    include: { cliente: true },
+  });
+  res.status(201).json(comanda);
+});
+
+// Adicionar item à comanda
+router.post('/:id/itens', async (req, res) => {
+  const { nomeProduto, quantidade, valorUnitario } = req.body;
+  if (!nomeProduto || !quantidade || !valorUnitario)
+    return res.status(400).json({ erro: 'nomeProduto, quantidade e valorUnitario são obrigatórios' });
+
+  const comandaId = Number(req.params.id);
+  const valorTotal = Number(quantidade) * Number(valorUnitario);
+
+  const item = await prisma.itemComanda.create({
+    data: { comandaId, nomeProduto, quantidade: Number(quantidade), valorUnitario: Number(valorUnitario), valorTotal },
+  });
+
+  // Atualizar valor total da comanda
+  const itens = await prisma.itemComanda.findMany({ where: { comandaId } });
+  const novoTotal = itens.reduce((acc, i) => acc + i.valorTotal, 0);
+  await prisma.comanda.update({ where: { id: comandaId }, data: { valorTotal: novoTotal } });
+
+  res.status(201).json(item);
+});
+
+// Remover item da comanda
+router.delete('/:id/itens/:itemId', async (req, res) => {
+  const comandaId = Number(req.params.id);
+  await prisma.itemComanda.delete({ where: { id: Number(req.params.itemId) } });
+
+  const itens = await prisma.itemComanda.findMany({ where: { comandaId } });
+  const novoTotal = itens.reduce((acc, i) => acc + i.valorTotal, 0);
+  await prisma.comanda.update({ where: { id: comandaId }, data: { valorTotal: novoTotal } });
+
+  res.status(204).end();
+});
+
+// Fechar comanda
+router.patch('/:id/fechar', async (req, res) => {
+  const { formaPagamento } = req.body;
+  if (!formaPagamento) return res.status(400).json({ erro: 'formaPagamento é obrigatório' });
+
+  const comandaId = Number(req.params.id);
+  const comanda = await prisma.comanda.findUnique({
+    where: { id: comandaId },
+    include: { cliente: true },
+  });
+  if (!comanda) return res.status(404).json({ erro: 'Comanda não encontrada' });
+
+  const ops = [
+    prisma.comanda.update({
+      where: { id: comandaId },
+      data: { status: 'fechada', formaPagamento, dataFechamento: new Date() },
+      include: { cliente: true, itens: true },
+    }),
+  ];
+
+  // Se for fiado, adiciona ao saldo do cliente
+  if (formaPagamento === 'Fiado') {
+    ops.push(
+      prisma.cliente.update({
+        where: { id: comanda.clienteId },
+        data: { saldoFiado: { increment: comanda.valorTotal } },
+      }),
+      prisma.fiadoTransacao.create({
+        data: {
+          clienteId: comanda.clienteId,
+          valor: comanda.valorTotal,
+          descricao: `Comanda #${comandaId} — ${new Date().toLocaleDateString('pt-BR')}`,
+        },
+      })
+    );
+  }
+
+  const [comandaFechada] = await prisma.$transaction(ops);
+  res.json(comandaFechada);
+});
+
+module.exports = router;
