@@ -4,7 +4,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0ece6; color: 
 
 /* ===== NAVBAR / HEADER ===== */
 .navbar {
-  background: linear-gradient(135deg, #2c1501 0%, #4a2200 60%, #3d1a00 100%);
+  background: linear-gradient(135deg, #000000 0%, #111111 60%, #0a0a0a 100%);
   color: white;
   display: flex;
   flex-direction: column;
