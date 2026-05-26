@@ -41,10 +41,23 @@ router.post('/:id/itens', async (req, res) => {
     return res.status(400).json({ erro: 'nomeProduto, quantidade e valorUnitario são obrigatórios' });
 
   const comandaId = Number(req.params.id);
-  const valorTotal = Number(quantidade) * Number(valorUnitario);
+  const qtd = Number(quantidade);
+  const valorTotal = qtd * Number(valorUnitario);
+
+  // Verifica e debita estoque se houver produto cadastrado com esse nome
+  const produto = await prisma.produto.findFirst({ where: { nome: nomeProduto, ativo: true } });
+  if (produto) {
+    if (produto.quantidadeEstoque < qtd) {
+      return res.status(400).json({ erro: `Estoque insuficiente. Disponível: ${produto.quantidadeEstoque} unidade(s).` });
+    }
+    await prisma.produto.update({
+      where: { id: produto.id },
+      data: { quantidadeEstoque: { decrement: qtd } },
+    });
+  }
 
   const item = await prisma.itemComanda.create({
-    data: { comandaId, nomeProduto, quantidade: Number(quantidade), valorUnitario: Number(valorUnitario), valorTotal },
+    data: { comandaId, nomeProduto, quantidade: qtd, valorUnitario: Number(valorUnitario), valorTotal },
   });
 
   // Atualizar valor total da comanda
@@ -58,7 +71,19 @@ router.post('/:id/itens', async (req, res) => {
 // Remover item da comanda
 router.delete('/:id/itens/:itemId', async (req, res) => {
   const comandaId = Number(req.params.id);
-  await prisma.itemComanda.delete({ where: { id: Number(req.params.itemId) } });
+  const item = await prisma.itemComanda.findUnique({ where: { id: Number(req.params.itemId) } });
+
+  if (item) {
+    // Devolve ao estoque se o produto existir
+    const produto = await prisma.produto.findFirst({ where: { nome: item.nomeProduto, ativo: true } });
+    if (produto) {
+      await prisma.produto.update({
+        where: { id: produto.id },
+        data: { quantidadeEstoque: { increment: item.quantidade } },
+      });
+    }
+    await prisma.itemComanda.delete({ where: { id: item.id } });
+  }
 
   const itens = await prisma.itemComanda.findMany({ where: { comandaId } });
   const novoTotal = itens.reduce((acc, i) => acc + i.valorTotal, 0);

@@ -7,6 +7,7 @@ const comandasRouter = require('./routes/comandas');
 const relatoriosRouter = require('./routes/relatorios');
 const produtosRouter = require('./routes/produtos');
 const fiadoRouter = require('./routes/fiado');
+const estoqueRouter = require('./routes/estoque');
 
 const app = express();
 app.use(cors());
@@ -17,6 +18,7 @@ app.use('/api/comandas', comandasRouter);
 app.use('/api/relatorios', relatoriosRouter);
 app.use('/api/produtos', produtosRouter);
 app.use('/api/fiado', fiadoRouter);
+app.use('/api/estoque', estoqueRouter);
 
 // Serve frontend compilado em produção
 const frontendDist = path.join(__dirname, '../../frontend/dist');

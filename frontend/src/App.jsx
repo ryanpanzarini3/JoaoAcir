@@ -6,6 +6,8 @@ import Comanda from './pages/Comanda';
 import Relatorios from './pages/Relatorios';
 import Produtos from './pages/Produtos';
 import Fiado from './pages/Fiado';
+import Estoque from './pages/Estoque';
+import Login from './pages/Login';
 import api from './api';
 import './App.css';
 
@@ -25,7 +27,7 @@ function useRelogio() {
   return hora;
 }
 
-function Navbar() {
+function Navbar({ onLogout }) {
   const hora = useRelogio();
   const [stats, setStats] = useState({ faturamentoHoje: 0, comandasAtivas: 0 });
 
@@ -52,6 +54,9 @@ function Navbar() {
           <div className="stat-item">Faturamento Hoje: <strong>{fmt(stats.faturamentoHoje)}</strong></div>
           <div className="stat-item">Comandas Ativas: <strong>{stats.comandasAtivas}</strong></div>
           <div className="stat-item"><strong>{hora}</strong></div>
+          <div className="stat-item">
+            <button className="btn-sair" onClick={onLogout} title="Sair">🔒 Sair</button>
+          </div>
         </div>
       </div>
       <div className="navbar-links">
@@ -60,15 +65,32 @@ function Navbar() {
         <NavLink to="/fiado">Fiado</NavLink>
         <NavLink to="/relatorios">Relatórios</NavLink>
         <NavLink to="/produtos">Cardápio</NavLink>
+        <NavLink to="/estoque">Estoque</NavLink>
       </div>
     </nav>
   );
 }
 
 export default function App() {
+  const [logado, setLogado] = useState(() => sessionStorage.getItem('bar-logado') === '1');
+
+  function handleLogin() {
+    sessionStorage.setItem('bar-logado', '1');
+    setLogado(true);
+  }
+
+  function handleLogout() {
+    sessionStorage.removeItem('bar-logado');
+    setLogado(false);
+  }
+
+  if (!logado) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <BrowserRouter>
-      <Navbar />
+      <Navbar onLogout={handleLogout} />
       <main className="container">
         <Routes>
           <Route path="/" element={<Comandas />} />
@@ -77,6 +99,7 @@ export default function App() {
           <Route path="/relatorios" element={<Relatorios />} />
           <Route path="/fiado" element={<Fiado />} />
           <Route path="/produtos" element={<Produtos />} />
+          <Route path="/estoque" element={<Estoque />} />
         </Routes>
       </main>
     </BrowserRouter>

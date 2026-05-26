@@ -42,11 +42,12 @@ model ItemComanda {
 }
 
 model Produto {
-  id        Int     @id @default(autoincrement())
-  nome      String
-  categoria String  @default("Outros")
-  preco     Float
-  ativo     Boolean @default(true)
+  id                Int     @id @default(autoincrement())
+  nome              String
+  categoria         String  @default("Outros")
+  preco             Float
+  ativo             Boolean @default(true)
+  quantidadeEstoque Int     @default(0)
 }
 
 model FiadoTransacao {
