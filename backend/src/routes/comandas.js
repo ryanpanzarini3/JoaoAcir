@@ -114,6 +114,9 @@ router.patch('/:id/fechar', async (req, res) => {
 
   // Se for fiado, adiciona ao saldo do cliente
   if (formaPagamento === 'Fiado') {
+    const itens = await prisma.itemComanda.findMany({ where: { comandaId } });
+    const linhasItens = itens.map(i => `• ${i.quantidade}x ${i.nomeProduto} — R$ ${i.valorTotal.toFixed(2).replace('.', ',')}`);
+    const descricao = [`Comanda #${comandaId} — ${new Date().toLocaleDateString('pt-BR')}`, ...linhasItens].join('\n');
     ops.push(
       prisma.cliente.update({
         where: { id: comanda.clienteId },
@@ -123,7 +126,7 @@ router.patch('/:id/fechar', async (req, res) => {
         data: {
           clienteId: comanda.clienteId,
           valor: comanda.valorTotal,
-          descricao: `Comanda #${comandaId} — ${new Date().toLocaleDateString('pt-BR')}`,
+          descricao,
         },
       })
     );

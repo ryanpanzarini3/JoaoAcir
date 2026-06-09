@@ -6,9 +6,20 @@ const prisma = require('../prisma');
 router.get('/', async (req, res) => {
   const clientes = await prisma.cliente.findMany({
     where: { saldoFiado: { gt: 0 } },
+    include: {
+      fiadoTransacoes: {
+        where: { valor: { gt: 0 } },
+        orderBy: { data: 'desc' },
+        take: 1,
+      },
+    },
     orderBy: { saldoFiado: 'desc' },
   });
-  res.json(clientes);
+  const result = clientes.map(c => ({
+    ...c,
+    ultimoFiado: c.fiadoTransacoes[0]?.data || null,
+  }));
+  res.json(result);
 });
 
 // Histórico de fiado de um cliente

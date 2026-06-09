@@ -82,6 +82,11 @@ export default function Fiado() {
               <div className="fiado-row-info">
                 <span className="fiado-nome">{c.nome}</span>
                 <span className="fiado-tel">{c.telefone}</span>
+                {c.ultimoFiado && (
+                  <span style={{ fontSize: '0.73rem', color: '#b07a3a', marginTop: 2 }}>
+                    📅 Último fiado: {fmtData(c.ultimoFiado)}
+                  </span>
+                )}
               </div>
               <span className="fiado-valor">{fmt(c.saldoFiado)}</span>
             </div>
@@ -121,17 +126,29 @@ export default function Fiado() {
               <p className="empty">Nenhuma transação.</p>
             ) : (
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {selecionado.fiadoTransacoes.map(t => (
-                  <li key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f0ebe3' }}>
-                    <div>
-                      <div style={{ fontSize: '0.88rem', color: '#444' }}>{t.descricao}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#aaa' }}>{fmtData(t.data)}</div>
-                    </div>
-                    <span style={{ fontWeight: 700, color: t.valor > 0 ? '#e94560' : '#27ae60', whiteSpace: 'nowrap' }}>
-                      {t.valor > 0 ? '+' : ''}{fmt(t.valor)}
-                    </span>
-                  </li>
-                ))}
+                {selecionado.fiadoTransacoes.map(t => {
+                  const [titulo, ...itens] = t.descricao ? t.descricao.split('\n') : [t.descricao];
+                  return (
+                    <li key={t.id} style={{ padding: '10px 0', borderBottom: '1px solid #f0ebe3' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ fontSize: '0.88rem', color: '#444', fontWeight: 600 }}>{titulo}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#aaa' }}>{fmtData(t.data)}</div>
+                        </div>
+                        <span style={{ fontWeight: 700, color: t.valor > 0 ? '#e94560' : '#27ae60', whiteSpace: 'nowrap', marginLeft: 12 }}>
+                          {t.valor > 0 ? '+' : ''}{fmt(t.valor)}
+                        </span>
+                      </div>
+                      {itens.length > 0 && (
+                        <ul style={{ listStyle: 'none', padding: '4px 0 0 8px', margin: 0 }}>
+                          {itens.map((linha, idx) => (
+                            <li key={idx} style={{ fontSize: '0.78rem', color: '#666', padding: '1px 0' }}>{linha}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
 
