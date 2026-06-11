@@ -26,7 +26,7 @@ router.patch('/:id', async (req, res) => {
 
   const atualizado = await prisma.produto.update({
     where: { id: Number(req.params.id) },
-    data: { quantidadeEstoque: qtd },
+    data: { quantidadeEstoque: BigInt(qtd) },
   });
   res.json(atualizado);
 });

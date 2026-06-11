@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 
+function parseEstoque(qtd) {
+  if (qtd === undefined || qtd === null) return 0n;
+  return typeof qtd === 'string' ? BigInt(qtd) : BigInt(qtd);
+}
+
+function formatEstoque(qtd) {
+  return String(parseEstoque(qtd));
+}
+
 export default function Estoque() {
   const [produtos, setProdutos] = useState([]);
   const [editando, setEditando] = useState(null); // id do produto em edição
@@ -66,8 +75,9 @@ export default function Estoque() {
   }
 
   function corEstoque(qtd) {
-    if (qtd === 0) return '#e74c3c';
-    if (qtd <= 5) return '#e67e22';
+    const quantidade = parseEstoque(qtd);
+    if (quantidade === 0n) return '#e74c3c';
+    if (quantidade <= 5n) return '#e67e22';
     return '#27ae60';
   }
 
@@ -139,14 +149,14 @@ export default function Estoque() {
                         minWidth: 80,
                         textAlign: 'right'
                       }}>
-                        {p.quantidadeEstoque} un
+                        {formatEstoque(p.quantidadeEstoque)} un
                       </span>
-                      {p.quantidadeEstoque === 0 && (
+                      {parseEstoque(p.quantidadeEstoque) === 0n && (
                         <span style={{ fontSize: '0.72rem', background: '#fde8e8', color: '#e74c3c', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
                           SEM ESTOQUE
                         </span>
                       )}
-                      {p.quantidadeEstoque > 0 && p.quantidadeEstoque <= 5 && (
+                      {parseEstoque(p.quantidadeEstoque) > 0n && parseEstoque(p.quantidadeEstoque) <= 5n && (
                         <span style={{ fontSize: '0.72rem', background: '#fef3e2', color: '#e67e22', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
                           BAIXO
                         </span>

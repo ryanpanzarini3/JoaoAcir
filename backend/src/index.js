@@ -14,6 +14,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const originalJson = app.response.json;
+app.response.json = function json(body) {
+  const safeBody = serializeBigInt(body);
+  return originalJson.call(this, safeBody);
+};
+
 app.use('/api/clientes', clientesRouter);
 app.use('/api/comandas', comandasRouter);
 app.use('/api/relatorios', relatoriosRouter);
@@ -29,6 +35,19 @@ app.get('/{*path}', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
+
+function serializeBigInt(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (Array.isArray(value)) return value.map(serializeBigInt);
+  if (value && typeof value === 'object') {
+    const result = {};
+    for (const key of Object.keys(value)) {
+      result[key] = serializeBigInt(value[key]);
+    }
+    return result;
+  }
+  return value;
+}
 
 async function startServer() {
   await sanitizeInvalidEstoque(process.env.DATABASE_URL);

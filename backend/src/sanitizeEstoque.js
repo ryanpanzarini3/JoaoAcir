@@ -1,8 +1,6 @@
 const path = require('path');
 const Database = require('better-sqlite3');
 
-const MAX_ESTOQUE = 999999n;
-
 function resolveDatabasePath(databaseUrl) {
   if (!databaseUrl || !databaseUrl.startsWith('file:')) return null;
 
@@ -17,9 +15,7 @@ function resolveDatabasePath(databaseUrl) {
 function normalizeEstoque(value) {
   const numericValue = typeof value === 'bigint' ? value : BigInt(value);
 
-  if (numericValue < 0n) return 0;
-  if (numericValue > MAX_ESTOQUE) return Number(MAX_ESTOQUE);
-  return Number(numericValue);
+  return numericValue < 0n ? 0n : numericValue;
 }
 
 async function sanitizeInvalidEstoque(databaseUrl) {
@@ -37,8 +33,8 @@ async function sanitizeInvalidEstoque(databaseUrl) {
     if (!tableExists) return 0;
 
     const invalidRows = db
-      .prepare('SELECT id, quantidadeEstoque FROM Produto WHERE quantidadeEstoque < 0 OR quantidadeEstoque > ?')
-      .all(MAX_ESTOQUE);
+      .prepare('SELECT id, quantidadeEstoque FROM Produto WHERE quantidadeEstoque < 0')
+      .all();
 
     if (invalidRows.length === 0) return 0;
 

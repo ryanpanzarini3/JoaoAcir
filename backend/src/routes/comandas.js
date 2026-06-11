@@ -52,13 +52,7 @@ router.post('/:id/itens', async (req, res) => {
     }
     await prisma.produto.update({
       where: { id: produto.id },
-      data: { quantidadeEstoque: { decrement: qtd } },
-    });
-  }
-
-  const item = await prisma.itemComanda.create({
-    data: { comandaId, nomeProduto, quantidade: qtd, valorUnitario: Number(valorUnitario), valorTotal },
-  });
+        data: { quantidadeEstoque: { decrement: BigInt(qtd) } },
 
   // Atualizar valor total da comanda
   const itens = await prisma.itemComanda.findMany({ where: { comandaId } });
@@ -79,7 +73,7 @@ router.delete('/:id/itens/:itemId', async (req, res) => {
     if (produto) {
       await prisma.produto.update({
         where: { id: produto.id },
-        data: { quantidadeEstoque: { increment: item.quantidade } },
+        data: { quantidadeEstoque: { increment: BigInt(item.quantidade) } },
       });
     }
     await prisma.itemComanda.delete({ where: { id: item.id } });
