@@ -8,6 +8,7 @@ const relatoriosRouter = require('./routes/relatorios');
 const produtosRouter = require('./routes/produtos');
 const fiadoRouter = require('./routes/fiado');
 const estoqueRouter = require('./routes/estoque');
+const { sanitizeInvalidEstoque } = require('./sanitizeEstoque');
 
 const app = express();
 app.use(cors());
@@ -28,6 +29,16 @@ app.get('/{*path}', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+
+async function startServer() {
+  await sanitizeInvalidEstoque(process.env.DATABASE_URL);
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+  });
+}
+
+startServer().catch((error) => {
+  console.error('Falha ao iniciar o servidor:', error);
+  process.exit(1);
 });
