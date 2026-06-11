@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../prisma');
+const { parseEstoqueValue } = require('../stock');
 
 // Listar produtos ativos (agrupados por categoria)
 router.get('/', async (req, res) => {
@@ -31,17 +32,28 @@ router.post('/', async (req, res) => {
 
 // Atualizar produto
 router.put('/:id', async (req, res) => {
-  const { nome, categoria, preco, ativo } = req.body;
-  const produto = await prisma.produto.update({
-    where: { id: Number(req.params.id) },
-    data: {
+  const { nome, categoria, preco, ativo, quantidadeEstoque } = req.body;
+
+  try {
+    const data = {
       ...(nome != null && { nome }),
       ...(categoria != null && { categoria }),
       ...(preco != null && { preco: Number(preco) }),
       ...(ativo != null && { ativo }),
-    },
-  });
-  res.json(produto);
+    };
+
+    if (quantidadeEstoque != null) {
+      data.quantidadeEstoque = parseEstoqueValue(quantidadeEstoque);
+    }
+
+    const produto = await prisma.produto.update({
+      where: { id: Number(req.params.id) },
+      data,
+    });
+    res.json(produto);
+  } catch (error) {
+    return res.status(400).json({ erro: error.message });
+  }
 });
 
 // Deletar (desativar) produto

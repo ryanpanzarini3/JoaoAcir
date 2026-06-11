@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../prisma');
+const { parseEstoqueValue } = require('../stock');
 
 // Listar todos os produtos com estoque
 router.get('/', async (req, res) => {
@@ -14,21 +15,20 @@ router.get('/', async (req, res) => {
 // Atualizar quantidade do estoque de um produto
 router.patch('/:id', async (req, res) => {
   const { quantidade } = req.body;
-  if (quantidade === undefined || quantidade === null)
-    return res.status(400).json({ erro: 'quantidade é obrigatória' });
+  try {
+    const qtd = parseEstoqueValue(quantidade);
 
-  const qtd = Number(quantidade);
-  if (isNaN(qtd) || qtd < 0 || qtd > 999999)
-    return res.status(400).json({ erro: 'Quantidade inválida (deve estar entre 0 e 999.999)' });
+    const produto = await prisma.produto.findUnique({ where: { id: Number(req.params.id) } });
+    if (!produto) return res.status(404).json({ erro: 'Produto não encontrado' });
 
-  const produto = await prisma.produto.findUnique({ where: { id: Number(req.params.id) } });
-  if (!produto) return res.status(404).json({ erro: 'Produto não encontrado' });
-
-  const atualizado = await prisma.produto.update({
-    where: { id: Number(req.params.id) },
-    data: { quantidadeEstoque: BigInt(qtd) },
-  });
-  res.json(atualizado);
+    const atualizado = await prisma.produto.update({
+      where: { id: Number(req.params.id) },
+      data: { quantidadeEstoque: qtd },
+    });
+    res.json(atualizado);
+  } catch (error) {
+    return res.status(400).json({ erro: error.message });
+  }
 });
 
 module.exports = router;
