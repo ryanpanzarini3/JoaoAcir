@@ -54,17 +54,18 @@ router.post('/:id/itens', async (req, res) => {
       where: { id: produto.id },
       data: { quantidadeEstoque: { decrement: BigInt(qtd) } },
     });
+  }
 
-    const item = await prisma.itemComanda.create({
-      data: { comandaId, nomeProduto, quantidade: qtd, valorUnitario: Number(valorUnitario), valorTotal },
-    });
+  const item = await prisma.itemComanda.create({
+    data: { comandaId, nomeProduto, quantidade: qtd, valorUnitario: Number(valorUnitario), valorTotal },
+  });
 
-    // Atualizar valor total da comanda
-    const itens = await prisma.itemComanda.findMany({ where: { comandaId } });
-    const novoTotal = itens.reduce((acc, i) => acc + i.valorTotal, 0);
-    await prisma.comanda.update({ where: { id: comandaId }, data: { valorTotal: novoTotal } });
+  // Atualizar valor total da comanda
+  const itens = await prisma.itemComanda.findMany({ where: { comandaId } });
+  const novoTotal = itens.reduce((acc, i) => acc + i.valorTotal, 0);
+  await prisma.comanda.update({ where: { id: comandaId }, data: { valorTotal: novoTotal } });
 
-    res.status(201).json(item);
+  res.status(201).json(item);
 });
 
 // Remover item da comanda
