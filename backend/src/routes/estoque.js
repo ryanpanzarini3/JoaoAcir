@@ -31,4 +31,17 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
+// Excluir produto do estoque (desativa o produto)
+router.delete('/:id', async (req, res) => {
+  const produto = await prisma.produto.findUnique({ where: { id: Number(req.params.id) } });
+  if (!produto) return res.status(404).json({ erro: 'Produto não encontrado' });
+
+  await prisma.produto.update({
+    where: { id: Number(req.params.id) },
+    data: { ativo: false },
+  });
+
+  res.json({ ok: true });
+});
+
 module.exports = router;

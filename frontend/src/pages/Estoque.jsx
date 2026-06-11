@@ -61,6 +61,26 @@ export default function Estoque() {
     }
   }
 
+  async function excluir(id) {
+    const confirmacao = window.confirm('Tem certeza que deseja remover este produto do estoque?');
+    if (!confirmacao) return;
+
+    setLoading(true);
+    setErro('');
+    try {
+      await api.delete(`/estoque/${id}`);
+      setMsg('Produto removido do estoque!');
+      await carregar();
+      setTimeout(() => setMsg(''), 3000);
+    } catch (e) {
+      const mensagem = e?.response?.data?.erro || 'Erro ao excluir. Tente novamente.';
+      setErro(mensagem);
+      setTimeout(() => setErro(''), 4000);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const filtrados = produtos.filter(p =>
     !filtro ||
     p.nome.toLowerCase().includes(filtro.toLowerCase()) ||
@@ -162,6 +182,7 @@ export default function Estoque() {
                         </span>
                       )}
                       <button className="btn btn-secondary btn-sm" onClick={() => abrirEditar(p)}>Editar</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => excluir(p.id)} disabled={loading}>Excluir</button>
                     </>
                   )}
                 </div>
