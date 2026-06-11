@@ -65,4 +65,36 @@ router.post('/:clienteId/pagar', async (req, res) => {
   res.json(clienteAtualizado);
 });
 
+// Registrar novo valor de fiado para um cliente
+router.post('/:clienteId/fiar', async (req, res) => {
+  const clienteId = Number(req.params.clienteId);
+  const { valor, descricao } = req.body;
+  const valorNumerico = Number(String(valor).replace(',', '.'));
+
+  if (!valor || !Number.isFinite(valorNumerico) || valorNumerico <= 0) {
+    return res.status(400).json({ erro: 'Valor inválido' });
+  }
+
+  const cliente = await prisma.cliente.findUnique({ where: { id: clienteId } });
+  if (!cliente) return res.status(404).json({ erro: 'Cliente não encontrado' });
+
+  const novoSaldo = cliente.saldoFiado + valorNumerico;
+
+  const [clienteAtualizado] = await prisma.$transaction([
+    prisma.cliente.update({
+      where: { id: clienteId },
+      data: { saldoFiado: novoSaldo },
+    }),
+    prisma.fiadoTransacao.create({
+      data: {
+        clienteId,
+        valor: valorNumerico,
+        descricao: descricao || 'Fiado manual',
+      },
+    }),
+  ]);
+
+  res.json(clienteAtualizado);
+});
+
 module.exports = router;
