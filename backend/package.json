@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "node src/index.js",
-    "start": "npx prisma db push && node src/index.js",
+    "start": "npx prisma generate && npx prisma db push && node src/index.js",
     "build": "npx prisma generate && cd ../frontend && npm install && npm run build",
     "build:start": "npm run build && npm start",
     "db:migrate": "npx prisma migrate dev --name init",
@@ -16,6 +16,7 @@
     "recovery": "node recovery-produtos.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "postinstall": "prisma generate",
   "keywords": [],
   "author": "",
   "license": "ISC",
