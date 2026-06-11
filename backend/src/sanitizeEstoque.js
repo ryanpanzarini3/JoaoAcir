@@ -56,6 +56,5 @@ async function sanitizeInvalidEstoque(databaseUrl) {
 }
 
 module.exports = {
-  MAX_ESTOQUE: Number(MAX_ESTOQUE),
   sanitizeInvalidEstoque,
 };
