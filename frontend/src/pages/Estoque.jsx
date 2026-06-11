@@ -29,11 +29,16 @@ export default function Estoque() {
   }
 
   async function salvar(id) {
-    if (novaQtd === '' || isNaN(Number(novaQtd)) || Number(novaQtd) < 0) return;
+    const qtd = Number(novaQtd);
+    if (novaQtd === '' || isNaN(qtd) || qtd < 0 || qtd > 999999) {
+      setErro('Quantidade inválida (máximo: 999.999)');
+      setTimeout(() => setErro(''), 4000);
+      return;
+    }
     setLoading(true);
     setErro('');
     try {
-      await api.patch(`/estoque/${id}`, { quantidade: Number(novaQtd) });
+      await api.patch(`/estoque/${id}`, { quantidade: qtd });
       setMsg('Estoque atualizado!');
       setEditando(null);
       await carregar();
@@ -115,6 +120,7 @@ export default function Estoque() {
                       <input
                         type="number"
                         min="0"
+                        max="999999"
                         value={novaQtd}
                         onChange={e => setNovaQtd(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') salvar(p.id); if (e.key === 'Escape') cancelar(); }}

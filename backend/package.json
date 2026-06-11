@@ -13,6 +13,7 @@
     "build:start": "npm run build && npm start",
     "db:migrate": "npx prisma migrate dev --name init",
     "db:generate": "npx prisma generate",
+    "recovery": "node recovery-produtos.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
