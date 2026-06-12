@@ -104,7 +104,14 @@ export default function Clientes() {
     }
   }
 
-  const fmtData = (d) => new Date(d).toLocaleDateString('pt-BR');
+  const parseDate = (value) => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+  const fmtData = (d) => {
+    const date = parseDate(d);
+    return date ? date.toLocaleDateString('pt-BR') : '—';
+  };
 
   return (
     <div>

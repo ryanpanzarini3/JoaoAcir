@@ -38,6 +38,7 @@ const PORT = process.env.PORT || 3001;
 
 function serializeBigInt(value) {
   if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Date) return value.toISOString();
   if (Array.isArray(value)) return value.map(serializeBigInt);
   if (value && typeof value === 'object') {
     const result = {};

@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 
+function parseDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export default function Comanda() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -83,7 +88,10 @@ export default function Comanda() {
   }
 
   const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  const fmtData = (d) => new Date(d).toLocaleString('pt-BR');
+  const fmtData = (d) => {
+    const date = parseDate(d);
+    return date ? date.toLocaleString('pt-BR') : '—';
+  };
   const categorias = [...new Set(produtos.map(p => p.categoria))];
   const produtosFiltrados = produtos.filter(p => p.categoria === categoriaSelecionada);
 

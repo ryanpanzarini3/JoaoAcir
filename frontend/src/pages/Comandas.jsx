@@ -2,8 +2,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
+function parseDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 function tempoAberta(dataAbertura) {
-  const diff = Math.floor((Date.now() - new Date(dataAbertura)) / 60000);
+  const date = parseDate(dataAbertura);
+  if (!date) return '—';
+  const diff = Math.floor((Date.now() - date) / 60000);
   if (diff < 60) return diff + 'min';
   const h = Math.floor(diff / 60), m = diff % 60;
   return h + 'h' + (m > 0 ? m + 'm' : '');
@@ -139,7 +146,9 @@ export default function Comandas() {
                     <div><span className="label">Local:</span> {c.local}</div>
                     <div>
                       <span className="label">Aberta:</span>{' '}
-                      {new Date(c.dataAbertura).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      {parseDate(c.dataAbertura)
+                        ? parseDate(c.dataAbertura).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                        : '—'}
                       {' '}(Ha {tempoAberta(c.dataAbertura)})
                     </div>
                   </div>
