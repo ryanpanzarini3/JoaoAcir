@@ -57,21 +57,32 @@ router.post('/:id/itens', async (req, res) => {
   }
 
   // Verifica se o item já existe na comanda
-  const itemExistente = await prisma.itemComanda.findFirst({
+  const itensExistentes = await prisma.itemComanda.findMany({
     where: { comandaId, nomeProduto },
+    orderBy: { id: 'asc' },
   });
 
   let item;
-  if (itemExistente) {
-    // Atualiza o item existente
-    const novaQuantidade = itemExistente.quantidade + qtd;
+  if (itensExistentes.length > 0) {
+    const itemPrincipal = itensExistentes[0];
+    const quantidadeExistente = itensExistentes.reduce((acc, i) => acc + i.quantidade, 0);
+    const novaQuantidade = quantidadeExistente + qtd;
     const novoValorTotal = novaQuantidade * valorUnitarioNum;
+
+    if (itensExistentes.length > 1) {
+      const idsParaExcluir = itensExistentes.slice(1).map(i => i.id);
+      await prisma.itemComanda.deleteMany({ where: { id: { in: idsParaExcluir } } });
+    }
+
     item = await prisma.itemComanda.update({
-      where: { id: itemExistente.id },
-      data: { quantidade: novaQuantidade, valorTotal: novoValorTotal },
+      where: { id: itemPrincipal.id },
+      data: {
+        quantidade: novaQuantidade,
+        valorUnitario: valorUnitarioNum,
+        valorTotal: novoValorTotal,
+      },
     });
   } else {
-    // Cria novo item
     const valorTotal = qtd * valorUnitarioNum;
     item = await prisma.itemComanda.create({
       data: { comandaId, nomeProduto, quantidade: qtd, valorUnitario: valorUnitarioNum, valorTotal },
