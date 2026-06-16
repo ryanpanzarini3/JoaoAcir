@@ -9,6 +9,7 @@ function parseDate(value) {
 export default function Fiado() {
   const [devedores, setDevedores] = useState([]);
   const [selecionado, setSelecionado] = useState(null);  // cliente com histórico
+  const [busca, setBusca] = useState('');
   const [showPagar, setShowPagar] = useState(false);
   const [valorPagamento, setValorPagamento] = useState('');
   const [loading, setLoading] = useState(false);
@@ -53,12 +54,26 @@ export default function Fiado() {
   }
 
   const totalFiado = devedores.reduce((a, c) => a + c.saldoFiado, 0);
+  const devedoresFiltrados = devedores.filter(c => {
+    const termo = busca.trim().toLowerCase();
+    if (!termo) return true;
+    return c.nome.toLowerCase().includes(termo) || c.telefone.toLowerCase().includes(termo);
+  });
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 18 }}>
         <h1 style={{ color: '#2c1501', fontSize: '1.4rem', fontWeight: 800 }}>Fiado</h1>
         <button className="btn btn-secondary btn-sm" onClick={carregar}>↻ Atualizar</button>
+      </div>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 18 }}>
+        <input
+          type="text"
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+          placeholder="Buscar cliente por nome ou telefone"
+          style={{ flex: 1, minWidth: 220, padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd' }}
+        />
       </div>
 
       {/* Resumo */}
@@ -73,14 +88,14 @@ export default function Fiado() {
         </div>
       </div>
 
-      {devedores.length === 0 ? (
+      {devedoresFiltrados.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '36px 0' }}>
-          <p style={{ fontSize: '2rem', marginBottom: 8 }}>✅</p>
-          <p className="empty">Nenhum cliente com fiado em aberto!</p>
+          <p style={{ fontSize: '2rem', marginBottom: 8 }}>🔍</p>
+          <p className="empty">Nenhum cliente encontrado.</p>
         </div>
       ) : (
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          {devedores.map((c, i) => (
+          {devedoresFiltrados.map((c, i) => (
             <div
               key={c.id}
               className="fiado-row"
