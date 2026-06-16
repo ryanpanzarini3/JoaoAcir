@@ -17,6 +17,7 @@ export default function Comanda() {
   const [formaPagamento, setFormaPagamento] = useState('Dinheiro');
   const [loading, setLoading] = useState(false);
   const [adicionandoId, setAdicionandoId] = useState(null);
+  const [removendoId, setRemovendoId] = useState(null);
   const [erro, setErro] = useState('');
   const [produtos, setProdutos] = useState([]);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
@@ -72,10 +73,25 @@ export default function Comanda() {
     } finally { setAdicionandoId(null); }
   }
 
+  async function removerUmaUnidade(itemExistente) {
+    setRemovendoId(itemExistente.id);
+    try {
+      await api.patch(`/comandas/${id}/itens/${itemExistente.id}`, { quantidade: 1 });
+      await carregar();
+    } finally {
+      setRemovendoId(null);
+    }
+  }
+
   async function removerItem(itemId) {
     if (!confirm('Remover este item?')) return;
-    await api.delete(`/comandas/${id}/itens/${itemId}`);
-    await carregar();
+    setRemovendoId(itemId);
+    try {
+      await api.delete(`/comandas/${id}/itens/${itemId}`);
+      await carregar();
+    } finally {
+      setRemovendoId(null);
+    }
   }
 
   async function fecharComanda() {
@@ -137,12 +153,23 @@ export default function Comanda() {
                   {comanda.status === 'aberta' && (
                     <>
                       <button
+                        className="btn btn-warning btn-sm"
+                        onClick={() => removerUmaUnidade(i)}
+                        disabled={removendoId === i.id}
+                        title={`Remover uma unidade de ${i.nomeProduto}`}
+                      >-</button>
+                      <button
                         className="btn btn-success btn-sm"
                         onClick={() => adicionarMaisUm(i)}
                         disabled={adicionandoId === i.id}
                         title={`Adicionar mais um ${i.nomeProduto}`}
                       >+</button>
-                      <button className="btn btn-danger btn-sm" onClick={() => removerItem(i.id)}>✕</button>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => removerItem(i.id)}
+                        disabled={removendoId === i.id}
+                        title={`Remover todo o item ${i.nomeProduto}`}
+                      >✕</button>
                     </>
                   )}
                 </div>

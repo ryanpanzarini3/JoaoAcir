@@ -121,6 +121,46 @@ router.delete('/:id/itens/:itemId', async (req, res) => {
   res.status(204).end();
 });
 
+// Remover apenas uma unidade de um item da comanda
+router.patch('/:id/itens/:itemId', async (req, res) => {
+  const comandaId = Number(req.params.id);
+  const quantidade = Number(req.body.quantidade);
+  if (!quantidade || quantidade < 1) {
+    return res.status(400).json({ erro: 'quantidade deve ser maior que zero' });
+  }
+
+  const item = await prisma.itemComanda.findUnique({ where: { id: Number(req.params.itemId) } });
+  if (!item) return res.status(404).json({ erro: 'Item não encontrado' });
+
+  const produto = await prisma.produto.findFirst({ where: { nome: item.nomeProduto, ativo: true } });
+  if (produto) {
+    await prisma.produto.update({
+      where: { id: produto.id },
+      data: { quantidadeEstoque: { increment: BigInt(quantidade) } },
+    });
+  }
+
+  const novaQuantidade = item.quantidade - quantidade;
+  if (novaQuantidade <= 0) {
+    await prisma.itemComanda.delete({ where: { id: item.id } });
+  } else {
+    const valorUnitarioNum = Number(item.valorUnitario);
+    await prisma.itemComanda.update({
+      where: { id: item.id },
+      data: {
+        quantidade: novaQuantidade,
+        valorTotal: novaQuantidade * valorUnitarioNum,
+      },
+    });
+  }
+
+  const itens = await prisma.itemComanda.findMany({ where: { comandaId } });
+  const novoTotal = itens.reduce((acc, i) => acc + i.valorTotal, 0);
+  await prisma.comanda.update({ where: { id: comandaId }, data: { valorTotal: novoTotal } });
+
+  res.status(204).end();
+});
+
 // Fechar comanda
 router.patch('/:id/fechar', async (req, res) => {
   const { formaPagamento } = req.body;
