@@ -11,7 +11,6 @@ export default function Clientes() {
   const [activeTab, setActiveTab] = useState('info');
   const [valorFiado, setValorFiado] = useState('');
   const [deletandoId, setDeletandoId] = useState(null);
-  const [confirmacaoDeletar, setConfirmacaoDeletar] = useState('');
   const [descricaoFiado, setDescricaoFiado] = useState('');
   const [form, setForm] = useState({ nome: '', telefone: '', cpf: '', observacoes: '' });
   const [loading, setLoading] = useState(false);
@@ -70,7 +69,6 @@ export default function Clientes() {
       setActiveTab('info');
       setValorFiado('');
       setDescricaoFiado('');
-      setConfirmacaoDeletar('');
       setShowDetalhe(true);
     } catch (e) {
       setErro('Erro ao carregar detalhes do cliente.');
@@ -108,29 +106,18 @@ export default function Clientes() {
   }
 
   async function excluirCliente() {
-    if (!clienteDetalhe) return;
-    if (confirmacaoDeletar !== 'DELETAR') {
-      setErro('Digite DELETAR para confirmar a exclusão.');
-      return;
-    }
+    const cliente = editando || clienteDetalhe;
+    if (!cliente) return;
 
-    if (clienteDetalhe.saldoFiado > 0) {
-      setErro('Não é possível excluir cliente com fiado em aberto.');
-      return;
-    }
-
-    const temComandaAberta = clienteDetalhe.comandas?.some(c => c.status === 'aberta');
-    if (temComandaAberta) {
-      setErro('Não é possível excluir cliente com comanda aberta.');
-      return;
-    }
+    if (!confirm('Excluir este cliente? Essa ação não pode ser desfeita.')) return;
 
     setLoading(true);
     setErro('');
-    setDeletandoId(clienteDetalhe.id);
+    setDeletandoId(cliente.id);
     try {
-      await api.delete(`/clientes/${clienteDetalhe.id}`, { data: { confirmacao: 'DELETAR' } });
+      await api.delete(`/clientes/${cliente.id}`);
       setShowDetalhe(false);
+      setShowModal(false);
       await carregar(busca);
     } catch (e) {
       setErro(e?.response?.data?.erro || 'Erro ao excluir cliente.');
@@ -228,8 +215,16 @@ export default function Clientes() {
                 style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #ddd', borderRadius: 7, fontSize: '0.95rem', resize: 'vertical' }}
               />
             </div>
-            <div className="modal-actions">
+            <div className="modal-actions" style={{ justifyContent: 'space-between', gap: 10 }}>
               <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
+              {editando && (
+                <button
+                  className="btn btn-danger"
+                  onClick={excluirCliente}
+                  disabled={loading || deletandoId === editando.id}
+                  style={{ marginRight: 'auto' }}
+                >{loading && deletandoId === editando.id ? 'Excluindo...' : 'Excluir'}</button>
+              )}
               <button className="btn btn-primary" onClick={salvar} disabled={loading}>
                 {loading ? 'Salvando...' : 'Salvar'}
               </button>
@@ -281,29 +276,6 @@ export default function Clientes() {
                 </div>
               </div>
             )}
-
-            <div className="card" style={{ padding: 14, border: '1px solid #f0ebe3', marginTop: 16 }}>
-              <h3 style={{ fontSize: '0.95rem', marginBottom: 10 }}>Excluir Cliente</h3>
-              <p style={{ marginBottom: 10, color: '#555' }}>
-                Só é possível excluir um cliente se ele não tiver fiado aberto e não tiver comanda aberta.
-              </p>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-                <input
-                  placeholder="Digite DELETAR para confirmar"
-                  value={confirmacaoDeletar}
-                  onChange={e => setConfirmacaoDeletar(e.target.value)}
-                  style={{ flex: 1, minWidth: 220, padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd' }}
-                />
-                <button
-                  className="btn btn-danger"
-                  onClick={excluirCliente}
-                  disabled={loading || deletandoId === clienteDetalhe.id}
-                >{loading && deletandoId === clienteDetalhe.id ? 'Excluindo...' : 'Excluir Cliente'}</button>
-              </div>
-              <div style={{ fontSize: '0.85rem', color: '#888' }}>
-                Esta ação remove o cliente do sistema definitivamente.
-              </div>
-            </div>
 
             {activeTab === 'fiado' && (
               <>

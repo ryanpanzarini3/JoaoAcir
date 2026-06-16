@@ -35,11 +35,6 @@ router.get('/:id', async (req, res) => {
 // Excluir cliente se não houver pendências
 router.delete('/:id', async (req, res) => {
   const clienteId = Number(req.params.id);
-  const { confirmacao } = req.body;
-
-  if (confirmacao !== 'DELETAR') {
-    return res.status(400).json({ erro: 'Confirmação inválida. Digite DELETAR para excluir.' });
-  }
 
   const cliente = await prisma.cliente.findUnique({
     where: { id: clienteId },
