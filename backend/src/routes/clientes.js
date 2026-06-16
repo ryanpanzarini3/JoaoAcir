@@ -38,7 +38,10 @@ router.delete('/:id', async (req, res) => {
 
   const cliente = await prisma.cliente.findUnique({
     where: { id: clienteId },
-    include: { comandas: true },
+    include: {
+      comandas: { select: { id: true, status: true } },
+      fiadoTransacoes: { select: { id: true } },
+    },
   });
   if (!cliente) return res.status(404).json({ erro: 'Cliente não encontrado' });
 
@@ -55,7 +58,21 @@ router.delete('/:id', async (req, res) => {
     });
   }
 
-  await prisma.cliente.delete({ where: { id: clienteId } });
+  const comandaIds = cliente.comandas.map(c => c.id);
+  const operations = [];
+
+  if (comandaIds.length > 0) {
+    operations.push(prisma.itemComanda.deleteMany({ where: { comandaId: { in: comandaIds } } }));
+    operations.push(prisma.comanda.deleteMany({ where: { id: { in: comandaIds } } }));
+  }
+
+  if (cliente.fiadoTransacoes.length > 0) {
+    operations.push(prisma.fiadoTransacao.deleteMany({ where: { clienteId } }));
+  }
+
+  operations.push(prisma.cliente.delete({ where: { id: clienteId } }));
+  await prisma.$transaction(operations);
+
   res.status(204).end();
 });
 
