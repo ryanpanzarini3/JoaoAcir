@@ -10,6 +10,8 @@ export default function Clientes() {
   const [clienteDetalhe, setClienteDetalhe] = useState(null);
   const [activeTab, setActiveTab] = useState('info');
   const [valorFiado, setValorFiado] = useState('');
+  const [deletandoId, setDeletandoId] = useState(null);
+  const [confirmacaoDeletar, setConfirmacaoDeletar] = useState('');
   const [descricaoFiado, setDescricaoFiado] = useState('');
   const [form, setForm] = useState({ nome: '', telefone: '', cpf: '', observacoes: '' });
   const [loading, setLoading] = useState(false);
@@ -68,6 +70,7 @@ export default function Clientes() {
       setActiveTab('info');
       setValorFiado('');
       setDescricaoFiado('');
+      setConfirmacaoDeletar('');
       setShowDetalhe(true);
     } catch (e) {
       setErro('Erro ao carregar detalhes do cliente.');
@@ -101,6 +104,39 @@ export default function Clientes() {
       setErro(e?.response?.data?.erro || 'Erro ao registrar fiado.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function excluirCliente() {
+    if (!clienteDetalhe) return;
+    if (confirmacaoDeletar !== 'DELETAR') {
+      setErro('Digite DELETAR para confirmar a exclusão.');
+      return;
+    }
+
+    if (clienteDetalhe.saldoFiado > 0) {
+      setErro('Não é possível excluir cliente com fiado em aberto.');
+      return;
+    }
+
+    const temComandaAberta = clienteDetalhe.comandas?.some(c => c.status === 'aberta');
+    if (temComandaAberta) {
+      setErro('Não é possível excluir cliente com comanda aberta.');
+      return;
+    }
+
+    setLoading(true);
+    setErro('');
+    setDeletandoId(clienteDetalhe.id);
+    try {
+      await api.delete(`/clientes/${clienteDetalhe.id}`, { data: { confirmacao: 'DELETAR' } });
+      setShowDetalhe(false);
+      await carregar(busca);
+    } catch (e) {
+      setErro(e?.response?.data?.erro || 'Erro ao excluir cliente.');
+    } finally {
+      setLoading(false);
+      setDeletandoId(null);
     }
   }
 
@@ -245,6 +281,29 @@ export default function Clientes() {
                 </div>
               </div>
             )}
+
+            <div className="card" style={{ padding: 14, border: '1px solid #f0ebe3', marginTop: 16 }}>
+              <h3 style={{ fontSize: '0.95rem', marginBottom: 10 }}>Excluir Cliente</h3>
+              <p style={{ marginBottom: 10, color: '#555' }}>
+                Só é possível excluir um cliente se ele não tiver fiado aberto e não tiver comanda aberta.
+              </p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                <input
+                  placeholder="Digite DELETAR para confirmar"
+                  value={confirmacaoDeletar}
+                  onChange={e => setConfirmacaoDeletar(e.target.value)}
+                  style={{ flex: 1, minWidth: 220, padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd' }}
+                />
+                <button
+                  className="btn btn-danger"
+                  onClick={excluirCliente}
+                  disabled={loading || deletandoId === clienteDetalhe.id}
+                >{loading && deletandoId === clienteDetalhe.id ? 'Excluindo...' : 'Excluir Cliente'}</button>
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#888' }}>
+                Esta ação remove o cliente do sistema definitivamente.
+              </div>
+            </div>
 
             {activeTab === 'fiado' && (
               <>

@@ -23,10 +23,45 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const cliente = await prisma.cliente.findUnique({
     where: { id: Number(req.params.id) },
-    include: { comandas: true },
+    include: {
+      comandas: true,
+      fiadoTransacoes: { orderBy: { data: 'desc' } },
+    },
   });
   if (!cliente) return res.status(404).json({ erro: 'Cliente não encontrado' });
   res.json(cliente);
+});
+
+// Excluir cliente se não houver pendências
+router.delete('/:id', async (req, res) => {
+  const clienteId = Number(req.params.id);
+  const { confirmacao } = req.body;
+
+  if (confirmacao !== 'DELETAR') {
+    return res.status(400).json({ erro: 'Confirmação inválida. Digite DELETAR para excluir.' });
+  }
+
+  const cliente = await prisma.cliente.findUnique({
+    where: { id: clienteId },
+    include: { comandas: true },
+  });
+  if (!cliente) return res.status(404).json({ erro: 'Cliente não encontrado' });
+
+  const temFiado = cliente.saldoFiado > 0;
+  const temComandaAberta = cliente.comandas.some(c => c.status === 'aberta');
+
+  if (temFiado || temComandaAberta) {
+    return res.status(400).json({
+      erro: temFiado && temComandaAberta
+        ? 'Cliente não pode ser excluído porque possui fiado e comanda aberta.'
+        : temFiado
+          ? 'Cliente não pode ser excluído porque possui fiado em aberto.'
+          : 'Cliente não pode ser excluído porque possui comanda aberta.',
+    });
+  }
+
+  await prisma.cliente.delete({ where: { id: clienteId } });
+  res.status(204).end();
 });
 
 // Cadastrar cliente
