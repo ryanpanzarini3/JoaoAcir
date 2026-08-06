@@ -110,12 +110,12 @@ export default function Comanda() {
     const date = parseDate(d);
     return date ? date.toLocaleString('pt-BR') : '—';
   };
-  const categorias = [...new Set(produtos.map(p ={
+  const categorias = [...new Set(produtos.map(p => p.categoria))];
+  const produtosFiltrados = produtos.filter(p => {
     const contemCategoria = p.categoria === categoriaSelecionada;
     const contemBusca = buscaProduto.trim() === '' || p.nome.toLowerCase().includes(buscaProduto.toLowerCase());
     return contemCategoria && contemBusca;
-  }
-  const produtosFiltrados = produtos.filter(p => p.categoria === categoriaSelecionada);
+  });
 
   if (!comanda) return <p className="empty">Carregando...</p>;
 
@@ -195,7 +195,11 @@ export default function Comanda() {
           <div className="modal modal-wide">
             <div className="modal-header-bar">
               <h2>Lançar Item — Comanda #{comanda.id}</h2>
-              <bBarra de Pesquisa */}
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowAddItem(false)}>✕</button>
+            </div>
+            {erro && <div className="alert alert-error">{erro}</div>}
+
+            {/* Barra de Pesquisa */}
             <div className="form-group" style={{ margin: '12px 0 16px 0' }}>
               <input
                 type="text"
