@@ -21,6 +21,7 @@ export default function Comanda() {
   const [erro, setErro] = useState('');
   const [produtos, setProdutos] = useState([]);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
+  const [buscaProduto, setBuscaProduto] = useState('');
 
   useEffect(() => { carregar(); }, [id]);
 
@@ -32,6 +33,7 @@ export default function Comanda() {
   async function abrirModalItem() {
     setErro('');
     setItem({ nomeProduto: '', quantidade: 1, valorUnitario: '' });
+    setBuscaProduto('');
     if (produtos.length === 0) {
       const { data } = await api.get('/produtos');
       setProdutos(data);
@@ -108,7 +110,11 @@ export default function Comanda() {
     const date = parseDate(d);
     return date ? date.toLocaleString('pt-BR') : '—';
   };
-  const categorias = [...new Set(produtos.map(p => p.categoria))];
+  const categorias = [...new Set(produtos.map(p ={
+    const contemCategoria = p.categoria === categoriaSelecionada;
+    const contemBusca = buscaProduto.trim() === '' || p.nome.toLowerCase().includes(buscaProduto.toLowerCase());
+    return contemCategoria && contemBusca;
+  }
   const produtosFiltrados = produtos.filter(p => p.categoria === categoriaSelecionada);
 
   if (!comanda) return <p className="empty">Carregando...</p>;
@@ -189,7 +195,25 @@ export default function Comanda() {
           <div className="modal modal-wide">
             <div className="modal-header-bar">
               <h2>Lançar Item — Comanda #{comanda.id}</h2>
-              <button className="btn btn-secondary btn-sm" onClick={() => setShowAddItem(false)}>✕</button>
+              <bBarra de Pesquisa */}
+            <div className="form-group" style={{ margin: '12px 0 16px 0' }}>
+              <input
+                type="text"
+                placeholder="🔍 Procurar por item..."
+                value={buscaProduto}
+                onChange={e => setBuscaProduto(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  fontSize: '0.95rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* utton className="btn btn-secondary btn-sm" onClick={() => setShowAddItem(false)}>✕</button>
             </div>
             {erro && <div className="alert alert-error">{erro}</div>}
 
