@@ -81,6 +81,26 @@ export default function Estoque() {
     }
   }
 
+  async function excluirPermanente(p) {
+    if (!window.confirm(`Tem certeza que deseja EXCLUIR PERMANENTEMENTE "${p.nome}"?\n\nEssa ação é IRREVERSÍVEL.`)) return;
+    if (!window.confirm(`⚠️ ÚLTIMA CONFIRMAÇÃO ⚠️\n\n"${p.nome}" será deletado do banco de dados.\n\nDeseja continuar?`)) return;
+
+    setLoading(true);
+    setErro('');
+    try {
+      await api.delete(`/estoque/${p.id}/permanent`);
+      setMsg('Produto excluído permanentemente!');
+      await carregar();
+      setTimeout(() => setMsg(''), 3000);
+    } catch (e) {
+      const mensagem = e?.response?.data?.erro || 'Erro ao excluir. Tente novamente.';
+      setErro(mensagem);
+      setTimeout(() => setErro(''), 4000);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const filtrados = produtos.filter(p =>
     !filtro ||
     p.nome.toLowerCase().includes(filtro.toLowerCase()) ||
@@ -183,6 +203,13 @@ export default function Estoque() {
                       )}
                       <button className="btn btn-secondary btn-sm" onClick={() => abrirEditar(p)}>Editar</button>
                       <button className="btn btn-danger btn-sm" onClick={() => excluir(p.id)} disabled={loading}>Excluir</button>
+                      <button
+                        className="btn btn-sm"
+                        style={{ background: '#c0392b', color: 'white', border: 'none', cursor: 'pointer' }}
+                        onClick={() => excluirPermanente(p)}
+                        disabled={loading}
+                        title="Excluir permanentemente este produto"
+                      >🗑️ Deletar</button>
                     </>
                   )}
                 </div>

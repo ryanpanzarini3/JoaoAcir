@@ -49,6 +49,17 @@ export default function Produtos() {
     await carregar();
   }
 
+  async function excluirPermanente(p) {
+    if (!window.confirm(`Tem certeza que deseja excluir "${p.nome}" permanentemente?\n\nEssa ação é IRREVERSÍVEL.`)) return;
+    if (!window.confirm(`⚠️ ÚLTIMA CONFIRMAÇÃO ⚠️\n\n"${p.nome}" será deletado do banco de dados.\n\nDeseja continuar?`)) return;
+
+    setLoading(true);
+    try {
+      await api.delete(`/produtos/${p.id}/permanent`);
+      await carregar();
+    } finally { setLoading(false); }
+  }
+
   const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const produtosFiltrados = produtos.filter(p =>
@@ -97,6 +108,12 @@ export default function Produtos() {
                     className={`btn btn-sm ${p.ativo ? 'btn-danger' : 'btn-success'}`}
                     onClick={() => toggleAtivo(p)}
                   >{p.ativo ? 'Desativar' : 'Ativar'}</button>
+                  <button
+                    className="btn btn-sm"
+                    style={{ background: '#c0392b', color: 'white', border: 'none', cursor: 'pointer' }}
+                    onClick={() => excluirPermanente(p)}
+                    title="Excluir permanentemente este produto"
+                  >🗑️ Excluir</button>
                 </div>
               </li>
             ))}
