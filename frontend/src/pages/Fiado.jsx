@@ -91,7 +91,7 @@ export default function Fiado() {
       {devedoresFiltrados.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '36px 0' }}>
           <p style={{ fontSize: '2rem', marginBottom: 8 }}>🔍</p>
-          <p className="empty">Nenhum cliente encontrado.</p>
+          <p className="empty">Nenhum cliente encontrado!.</p>
         </div>
       ) : (
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
