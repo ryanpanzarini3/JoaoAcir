@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import '../App.css';
 
-const SENHA_CORRETA = 'bar2024';
+export const SENHA_CORRETA = 'bar2024';
 
 export default function Login({ onLogin }) {
   const [senha, setSenha] = useState('');

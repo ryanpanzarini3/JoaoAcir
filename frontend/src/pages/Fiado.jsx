@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../api';
+import { SENHA_CORRETA } from './Login';
 
 function parseDate(value) {
   const date = new Date(value);
@@ -14,6 +15,10 @@ export default function Fiado() {
   const [valorPagamento, setValorPagamento] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingDetalhe, setLoadingDetalhe] = useState(false);
+  const [autorizado, setAutorizado] = useState(false);
+  const [senhaAcesso, setSenhaAcesso] = useState('');
+  const [erroSenha, setErroSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const fmtData = (d) => {
@@ -26,7 +31,25 @@ export default function Fiado() {
     setDevedores(data);
   }, []);
 
-  useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => {
+    if (autorizado) {
+      carregar();
+    }
+  }, [autorizado, carregar]);
+
+  function confirmarSenha(e) {
+    e.preventDefault();
+
+    if (senhaAcesso === SENHA_CORRETA) {
+      setAutorizado(true);
+      setErroSenha('');
+      setSenhaAcesso('');
+      return;
+    }
+
+    setErroSenha('Senha incorreta para acessar o Fiado.');
+    setSenhaAcesso('');
+  }
 
   async function abrirDetalhe(cliente) {
     setLoadingDetalhe(true);
@@ -59,6 +82,52 @@ export default function Fiado() {
     if (!termo) return true;
     return c.nome.toLowerCase().includes(termo) || c.telefone.toLowerCase().includes(termo);
   });
+
+  if (!autorizado) {
+    return (
+      <div className="modal-overlay" style={{ position: 'fixed' }}>
+        <div className="modal">
+          <div className="modal-header-bar">
+            <h2>Acesso ao Fiado</h2>
+          </div>
+
+          <p style={{ marginBottom: 14, color: '#555' }}>
+            Digite a senha para entrar na tela de fiado.
+          </p>
+
+          <form onSubmit={confirmarSenha}>
+            <div className="form-group">
+              <label>Senha</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={mostrarSenha ? 'text' : 'password'}
+                  value={senhaAcesso}
+                  onChange={e => setSenhaAcesso(e.target.value)}
+                  placeholder="Digite a senha"
+                  autoFocus
+                  style={{ paddingRight: 42 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha(v => !v)}
+                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                  tabIndex={-1}
+                >
+                  {mostrarSenha ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </div>
+
+            {erroSenha && <p style={{ color: '#d32f2f', margin: '0 0 14px' }}>{erroSenha}</p>}
+
+            <div className="modal-actions">
+              <button type="submit" className="btn btn-primary">Entrar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

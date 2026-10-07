@@ -11,6 +11,14 @@ import Login from './pages/Login';
 import api from './api';
 import './App.css';
 
+function AuthGate({ logado, onLogin, children }) {
+  if (!logado) {
+    return <Login onLogin={onLogin} />;
+  }
+
+  return children;
+}
+
 function useRelogio() {
   const [hora, setHora] = useState('');
   useEffect(() => {
@@ -84,24 +92,29 @@ export default function App() {
     setLogado(false);
   }
 
-  if (!logado) {
-    return <Login onLogin={handleLogin} />;
-  }
-
   return (
     <BrowserRouter>
-      <Navbar onLogout={handleLogout} />
-      <main className="container">
+      {!logado ? (
         <Routes>
-          <Route path="/" element={<Comandas />} />
-          <Route path="/clientes" element={<Clientes />} />
-          <Route path="/comanda/:id" element={<Comanda />} />
-          <Route path="/relatorios" element={<Relatorios />} />
-          <Route path="/fiado" element={<Fiado />} />
-          <Route path="/produtos" element={<Produtos />} />
-          <Route path="/estoque" element={<Estoque />} />
+          <Route path="*" element={<Login onLogin={handleLogin} />} />
         </Routes>
-      </main>
+      ) : (
+        <AuthGate logado={logado} onLogin={handleLogin}>
+          <Navbar onLogout={handleLogout} />
+          <main className="container">
+            <Routes>
+              <Route path="/" element={<Comandas />} />
+              <Route path="/clientes" element={<Clientes />} />
+              <Route path="/comanda/:id" element={<Comanda />} />
+              <Route path="/relatorios" element={<Relatorios />} />
+              <Route path="/fiado" element={<Fiado />} />
+              <Route path="/produtos" element={<Produtos />} />
+              <Route path="/estoque" element={<Estoque />} />
+              <Route path="*" element={<Comandas />} />
+            </Routes>
+          </main>
+        </AuthGate>
+      )}
     </BrowserRouter>
   );
 }
